@@ -85,7 +85,7 @@ for i=1:length(mu_totry)
     semilogy(s/s(1), '-o')
     hold on;
     semilogy(s_local/s_local(1), '-*')
-    title(['local low-rank structure, $\mu$=', num2str(mu_totry(i)), ', FinalTime=',num2str(FinalTime),', space dimension=',num2str(Np*K)], 'Interpreter', 'Latex')
+    title(['local low-rank structure, $\mu$=', num2str(mu_totry(i)), ', $FinalTime$=',num2str(FinalTime),'spcadimension'], 'Interpreter', 'Latex')
     ylabel('normalized singular value', 'Interpreter', 'Latex')
     legend(['global, steps =',num2str(total_step)], ['local, steps =',num2str(local_step)], 'Interpreter', 'Latex')
     grid on;

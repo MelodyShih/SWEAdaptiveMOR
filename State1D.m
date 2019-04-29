@@ -38,8 +38,9 @@ ltime(1)=time;
 
 % outer time step loop 
 
+
 while(time<FinalTime)
-  dt = CFL*min(min(mindx./(abs(v./h)+sqrt(g*h)))); % how to choose?
+    dt = CFL*min(min(mindx./(abs(v./h)+sqrt(g*h)))); % how to choose?
 
   if(time+dt>FinalTime)
     dt = FinalTime-time;
