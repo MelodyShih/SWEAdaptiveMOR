@@ -77,10 +77,11 @@ end
 %% local low-rankness
 close all;
 local_step = ceil(total_step/20);
+local_start=1;
 for i=1:length(mu_totry)
     s = svd(Qh(:, (i-1)*w+1:i*w) - mean(Qh(:, (i-1)*w+1:i*w)));
-    s_local = svd(Qh(:, (i-1)*w+1:(i-1)*w+local_step+1) - mean(Qh(:, (i-1)*w+1:(i-1)*w+local_step+1)));
-
+%     s_local = svd(Qh(:, (i-1)*w+1:(i-1)*w+local_step+1) - mean(Qh(:, (i-1)*w+1:(i-1)*w+local_step+1)));
+    s_local = svd(Qh(:, (i-1)*w+local_start:(i-1)*w+local_step+local_start) - mean(Qh(:, (i-1)*w+local_start:(i-1)*w+local_step+local_start)));
     figure;
     semilogy(s/s(1), '-o')
     hold on;
