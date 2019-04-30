@@ -36,7 +36,7 @@ z = 1; % how often we adapted the sample pts, set to 1 for testing how well redu
 m = 15; % number of sample points
 r = 1; % rank r updates of the reduced basis
 Q = zeros(2*Np*K, wtotal);
-Fk = zeros(2*Np*K, w);
+F = zeros(2*Np*K, wtotal);
 
 %% Initial condition
 % height
@@ -82,7 +82,8 @@ norm(Qfull(:,1:winit)-Q(:,1:winit)) % Just checking that Qfull is the same as Q 
 Uk = U(:, 1:n);
 Pk = qdeim(Uk);
 
-Fk(:,1:w-1) = Q(:,winit-w+2:winit);
+% F(:,1:w-1) = Q(:,winit-w+2:winit);
+F(:,1:winit) = Q(:,1:winit);
 qold = Uk'*Q(:,winit);
 
 errs = zeros(wtotal-(winit),1);
@@ -95,21 +96,25 @@ for k = winit+1:wtotal
     time = time_end;
     qold = qnew;
     if (mod(k, z) == 0 || k==winit+1)
-        Fk(:,w) = ftrue(Qnew,time,time_end+tstep);
-        Rk = Fk - Uk*(Uk(Pk,:)\Fk(Pk,:));
+        F(:,k) = ftrue(Qnew,time,time_end+tstep);
+        Rk = F(:, k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
         [~,sk] = sort(sum((Rk.^2),2),'descend');
         skhat = sk(m+1:end);
         sk = sk(1:m);
     else
         temp = ftrue(Qnew,time,time_end+tstep);
-        Fk(sk,k) = temp(sk);
-        Fk(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*Fk(sk,k);
+        F(sk,k) = temp(sk);
+        F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
     end
+    Fk = F(:, k-w+1:k);
     [Uk, Pk] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+    
     UUtqnew = (Uk*Uk')*Qfull(:,k);
     errs(k-(winit)) = norm(Qfull(:,k)-UUtqnew);
+    fprintf("err = %f\n", errs(k-winit));
 end
 
-plot(1:wtotal-(winit),(errs'),'o-','Linewidth',1.5);
+%%
+semilogy(1:wtotal-(winit),(errs'),'o-','Linewidth',1.5);
 title("|q_{true}-UU^Tq_{true}|");
 ylabel('error');
