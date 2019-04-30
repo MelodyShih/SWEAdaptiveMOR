@@ -1,3 +1,6 @@
+clear;
+global limiter Np K B
+
 %% Setup solver
 % Test the gradient
 Globals1D;
@@ -6,7 +9,7 @@ Globals1D;
 FinalTime = 10;
 
 % given parameter 
-a=0; b=500; % space 
+a=0; b=100; % space 
 
 % Polynomial order used for approximation 
 N = 1;
@@ -25,52 +28,68 @@ StartUp1D;
 %% Setup variables for reduced order based
 w = 5;
 winit = 10;
-k = 5;
-% Qh = zeros(Np*K, winit);
-% Qv = zeros(Np*K, winit);
+wtotal = 11;
+n = 5;
+z = 5;
+m = 3;
+r = 1;
+Q = zeros(2*Np*K, wtotal);
+Fk = zeros(2*Np*K, w);
 
 % initial condition
-h = ones(size(x)); % size(x) = (#order of poly+1)x(#discretization pts)
+hinit = ones(size(x)); % size(x) = (#order of poly+1)x(#discretization pts)
 
 % setup bathymetry (mu)
-a0 = 220;
-b0 = 280;
+a0 = (a+b)/2-10;
+b0 = (a+b)/2+10;
 mu = 0.15;
 p = b0 - a0;
-B = -h+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
-v = zeros(Np,K);
+B = -hinit+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
+vinit = zeros(Np,K);
 
 limiter = 1; % if use limiter
 
 %% Plot initial condition
 % fix time step
-tstep = 1; % time step
+CFL=0.2; g=9.8;
+mindx = min(abs(x(2,:)-x(1,:)));
+tstep = CFL*min(min(mindx./(abs(vinit./hinit)+sqrt(g*hinit))));
+
 time =0;
 figure(1);
-plot(x,h+B,'b',x,B,'k','LineWidth',2);
+plot(x,hinit+B,'b',x,B,'k','LineWidth',2);
 title(['t=',num2str(time)]);
 
 
 %% Start simulation
-[Qh, Qv, time] = solveFOM(h, v, B, time, tstep, winit, limiter);
-Q = [Qh;Qv];
+[Qh, Qv, time] = solveFOM(hinit, vinit, time, tstep, winit);
+Q(:, 1:winit) = [Qh;Qv];
 
 [U, ~] = svd(Q, 'econ');
-Uk = U(:, 1:k);
-pk = qdeim(Uk);
+Uk = U(:, 1:n);
+Pk = qdeim(Uk);
 
-F = Q(time-w+1:time);
-q = Uk'*Q(:,time);
+Fk(:,1:w-1) = Q(:,winit-w+2:winit);
+qold = Uk'*Q(:,winit);
 
-%%
-while time<FinalTime
-    if FinalTime-time<tstep
-        time_end = FinalTime;
+%% AADEIM
+for k = winit+1:wtotal
+    time_end = time+tstep;
+    qnew = ftilde(qold,time,time_end,Uk,Pk);
+    Qnew = Uk*qnew;
+    time = time_end;
+    qold = qnew;
+    if (mod(k, z) == 0 || k==winit+1)
+        Fk(:,w) = ftrue(Qnew,time,time_end+tstep);
+        Rk = Fk - Uk*(Uk(Pk,:)\Fk(Pk,:));
+        [~,sk] = sort(sum((Rk.^2),2),'descend');
+        skhat = sk(m+1:end);
+        sk = sk(1:m);
     else
-        time_end = time+tstep;
-    end    
-    [h, v] = StateFixTS1D(h, v, time, time_end, B, limiter);
-%     time = time_end;
-%     Qh(:,time) = reshape(h, [Np*K, 1]);
-%     Qv(:,time) = reshape(v, [Np*K, 1]);
+        temp = ftrue(Qnew,time,time_end+tstep);
+        Fk(sk,k) = temp(sk);
+        Fk(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*Fk(sk,k);
+    end
+    [Uk, Pk] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+
 end
