@@ -28,13 +28,13 @@ limiter = 1; % if use limiter
 StartUp1D;
 
 %% Setup variables for reduced order based
-w = 5; % window of 
+w = 5; % window of size
 winit = 10;
 wtotal = 12;
 n = 5; % number of reduced basis
 z = 5; % how often we adapted the sample pts
 m = 15; % number of sample points
-r = 1; % rank r updates of the interpolation pts
+r = 1; % rank r updates of the reduced basis
 Q = zeros(2*Np*K, wtotal);
 Fk = zeros(2*Np*K, w);
 
