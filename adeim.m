@@ -10,8 +10,8 @@ function [Unew,Pnew] = adeim(U,P,S,Fp,Fs,r)
         beta = Ctpinv*Sr(:,i);
         U(S,:) = U(S,:)+alpha*beta';
     end
-    [Q,R] = qr(U); %Orthogonalization of U
-    Unew = Q; 
+    [Q,rtest] = qr(U); %Orthogonalization of U
+    Unew = Q(:,1:size(U,2)); 
     Pnew = qdeim(Unew); 
 end
 
