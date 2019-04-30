@@ -9,7 +9,7 @@ Globals1D;
 FinalTime = 10;
 
 % given parameter 
-a=0; b=100; % space 
+a=0; b=500; % space 
 
 % Polynomial order used for approximation 
 N = 1;
@@ -28,13 +28,13 @@ limiter = 1; % if use limiter
 StartUp1D;
 
 %% Setup variables for reduced order based
-w = 5;
+w = 5; % window of 
 winit = 10;
 wtotal = 12;
-n = 5;
-z = 5;
-m = 3;
-r = 1;
+n = 5; % number of reduced basis
+z = 5; % how often we adapted the sample pts
+m = 15; % number of sample points
+r = 1; % rank r updates of the interpolation pts
 Q = zeros(2*Np*K, wtotal);
 Fk = zeros(2*Np*K, w);
 
@@ -54,8 +54,6 @@ vinit = zeros(Np,K);
 
 %time 
 time =0;
-
-
 % fix time step
 CFL=0.2; g=9.8;
 mindx = min(abs(x(2,:)-x(1,:)));
