@@ -21,6 +21,8 @@ K = scale*b;
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(a, b, K);
 
+limiter = 1; % if use limiter
+
 
 % Initialize solver and construct grid and metric
 StartUp1D;
@@ -28,7 +30,7 @@ StartUp1D;
 %% Setup variables for reduced order based
 w = 5;
 winit = 10;
-wtotal = 11;
+wtotal = 12;
 n = 5;
 z = 5;
 m = 3;
@@ -36,7 +38,8 @@ r = 1;
 Q = zeros(2*Np*K, wtotal);
 Fk = zeros(2*Np*K, w);
 
-% initial condition
+%% Initial condition
+% height
 hinit = ones(size(x)); % size(x) = (#order of poly+1)x(#discretization pts)
 
 % setup bathymetry (mu)
@@ -45,17 +48,20 @@ b0 = (a+b)/2+10;
 mu = 0.15;
 p = b0 - a0;
 B = -hinit+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
+
+% momentum 
 vinit = zeros(Np,K);
 
-limiter = 1; % if use limiter
+%time 
+time =0;
 
-%% Plot initial condition
+
 % fix time step
 CFL=0.2; g=9.8;
 mindx = min(abs(x(2,:)-x(1,:)));
 tstep = CFL*min(min(mindx./(abs(vinit./hinit)+sqrt(g*hinit))));
 
-time =0;
+%% Plot initial condition
 figure(1);
 plot(x,hinit+B,'b',x,B,'k','LineWidth',2);
 title(['t=',num2str(time)]);
@@ -91,5 +97,4 @@ for k = winit+1:wtotal
         Fk(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*Fk(sk,k);
     end
     [Uk, Pk] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
-
 end
