@@ -29,9 +29,9 @@ limiter = 1; % if use limiter
 StartUp1D;
 
 %% Setup variables for reduced order based
-w = 10; % window of size
+w = 5; % window of size
 winit = 50;
-wtotal = 52; 
+wtotal = 200; 
 n = 10; % number of reduced basis
 z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 m = 2*Np*K; % number of sample points
@@ -96,7 +96,6 @@ for k = winit+1:wtotal
     qnew = ftilde(Uk'*Q(:,k-1),time,time_end,Uk,Pk);
     
     Q(:,k) = Uk*qnew;
-    plotsol(x, Q(:,k), Uk*qold, time);
     
     if(mod(k, 20) == 0)
         plotsol(x, Q(:,k), Qfull(:,k), time);
