@@ -1,6 +1,6 @@
 function [Unew,Pnew] = adeim(U,P,S,Fp,Fs,r)
-    C = U(P,:)\Fp;
-    R = U(S,:)*C-Fs;
+    C = U(P,:)\Fp; %% ftilde
+    R = U(S,:)*C-Fs; 
     [~,Sv,Sr] = svd(R,0);
     Sv = diag(Sv);
     Ctpinv = pinv(C');
@@ -11,7 +11,11 @@ function [Unew,Pnew] = adeim(U,P,S,Fp,Fs,r)
         U(S,:) = U(S,:)+alpha*beta';
     end
     [Q,rtest] = qr(U); %Orthogonalization of U
-    Unew = Q(:,1:size(U,2)); 
-    Pnew = qdeim(Unew); 
+    Unew = Q(:,1:size(U,2));
+    Pnew = qdeim(Unew);
+    % Test whether the new basis can represent the state 
+    %Cnew = Unew(P,:)\Fp; %% ftilde
+    %Rnew = Unew(S,:)*Cnew-Fs;
+    %fprintf('original max error: %e, new basis: %e\n', ...
+    %   max(max(R)), max(max(Rnew)));
 end
-
