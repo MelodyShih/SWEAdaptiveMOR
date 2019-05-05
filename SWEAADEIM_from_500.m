@@ -30,8 +30,8 @@ StartUp1D;
 
 %% Setup variables for reduced order based
 w = 5; % window of size
-winit = 30;
-wtotal = 35;
+winit = 50;
+wtotal = 200;
 n = 10; % number of reduced basis
 z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 m = 2*Np*K; % number of sample points
@@ -39,22 +39,22 @@ r = 1;  % rank r updates of the reduced basis
 Q = zeros(2*Np*K, wtotal);
 F = zeros(2*Np*K, wtotal);
 
-%% Initial condition
+%% Initial condition (load data from step 500)
 % height
-hinit = ones(size(x)); % size(x) = (#order of poly+1)x(#discretization pts)
+load('h500.mat');
+% momentum
+load('v500.mat');
+%time 
+load('time.mat');
 
 % setup bathymetry (mu)
 a0 = (a+b)/2-10;
 b0 = (a+b)/2+10;
-mu = 0.2;
+mu = 0.15;
 p = b0 - a0;
-B = -hinit+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
+B = -ones(size(x))+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
 
-% momentum 
-vinit = zeros(Np,K);
 
-%time 
-time=0;
 % fix time step
 CFL=0.1; g=9.8;
 mindx = min(abs(x(2,:)-x(1,:)));
@@ -105,26 +105,26 @@ for k = winit+1:wtotal
     fprintf("|| Qapprox(k)  - Qfull(k) || = %e\n", norm(Q(:,k) - Qfull(:,k)));
     errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
 
-    if (mod(k, z)==0 || k==winit+1)
-        fprintf('adapt sample pts ....\n')
-%         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
-        F(:,k) = ftrue(Q(:,k-1),time,time_end);
-        Rk = F(:,k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
-        [~,sk] = sort(sum((Rk.^2),2),'descend');
-        skhat = sk(m+1:end);
-        sk = sk(1:m);
-    else
-%         temp = ftrue(Qfull(:,k-1),time,time_end);
-        temp = ftrue(Q(:,k-1),time,time_end);
-        F(sk,k) = temp(sk);
-        F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
-    end
+%     if (mod(k, z)==0 || k==winit+1)
+%         fprintf('adapt sample pts ....\n')
+% %         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
+%         F(:,k) = ftrue(Q(:,k-1),time,time_end);
+%         Rk = F(:, k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
+%         [~,sk] = sort(sum((Rk.^2),2),'descend');
+%         skhat = sk(m+1:end);
+%         sk = sk(1:m);
+%     else
+% %         temp = ftrue(Qfull(:,k-1),time,time_end);
+%         temp = ftrue(Q(:,k-1),time,time_end);
+%         F(sk,k) = temp(sk);
+%         F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
+%     end
     
     time = time_end;
     
-%     sk = 1:m; 
-%     Fk = Qfull(:, k-w+1:k);
-    Fk = F(:, k-w+1:k);
+    sk = 1:m; 
+    Fk = Qfull(:, k-w+1:k);
+%     Fk = F(:, k-w+1:s);
     [Uk, Pk] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
 end
 

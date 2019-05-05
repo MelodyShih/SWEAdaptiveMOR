@@ -12,5 +12,13 @@ function [Qh, Qv, time] = solveFOM(hinit, vinit, time, tstep, winit)
         time = time_end;
         Qh(:,i) = reshape(h, [Np*K, 1]);
         Qv(:,i) = reshape(v, [Np*K, 1]);
+%         if(i == 500)
+%             hinit = h;
+%             vinit = v;
+%             save('h500.mat','hinit');
+%             save('v500.mat','vinit');
+%             save('time.mat','time');
+%         end
     end
+    
 end
