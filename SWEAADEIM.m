@@ -30,7 +30,7 @@ StartUp1D;
 
 %% Setup variables for reduced order based
 w = 5; % window of size
-winit = 30;
+winit = 20;
 wtotal = 35;
 n = 10; % number of reduced basis
 z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
@@ -46,7 +46,7 @@ hinit = ones(size(x)); % size(x) = (#order of poly+1)x(#discretization pts)
 % setup bathymetry (mu)
 a0 = (a+b)/2-10;
 b0 = (a+b)/2+10;
-mu = 0.2;
+mu = 0.15;
 p = b0 - a0;
 B = -hinit+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
 
@@ -93,7 +93,7 @@ errs = zeros(wtotal-(winit),1);
 %% AADEIM
 for k = winit+1:wtotal
     time_end = time+tstep;
-    qnew = ftilde(Uk'*Q(:,k-1),time,time_end,Uk,Pk);
+    qnew = ftilde(Q(:,k-1),time,time_end,Uk,Pk); % Ck = (Pk'*Uk)\Pk'*Fk
     
     Q(:,k) = Uk*qnew;
     
@@ -102,20 +102,20 @@ for k = winit+1:wtotal
     end
     
     fprintf("|| UUtQfull(k) - Qfull(k) || = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k))); 
-    fprintf("|| Qapprox(k)  - Qfull(k) || = %e\n", norm(Q(:,k) - Qfull(:,k)));
+    fprintf("|| Qapprox(k)  - Qfull(k) || = %e\n\n", norm(Q(:,k) - Qfull(:,k)));
     errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
 
     if (mod(k, z)==0 || k==winit+1)
         fprintf('adapt sample pts ....\n')
 %         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
-        F(:,k) = ftrue(Q(:,k-1),time,time_end);
+        F(:,k) = ftrue(Q(:,k),time,time_end); % F(:, k) is the surrogate of the full model at timestep k+1
         Rk = F(:,k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
         [~,sk] = sort(sum((Rk.^2),2),'descend');
         skhat = sk(m+1:end);
         sk = sk(1:m);
     else
 %         temp = ftrue(Qfull(:,k-1),time,time_end);
-        temp = ftrue(Q(:,k-1),time,time_end);
+        temp = ftrue(Q(:,k),time,time_end);
         F(sk,k) = temp(sk);
         F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
     end
@@ -125,7 +125,9 @@ for k = winit+1:wtotal
 %     sk = 1:m; 
 %     Fk = Qfull(:, k-w+1:k);
     Fk = F(:, k-w+1:k);
-    [Uk, Pk] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+    [Uk, Pk, rho2] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+    [~,s,~] = svd(Fk,0);
+    fprintf('d(Uk+1, Ubark+1) = %e\n', rho2/(min(diag(s))^2));
 end
 
 %%
