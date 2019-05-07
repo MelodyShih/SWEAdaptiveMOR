@@ -30,8 +30,8 @@ StartUp1D;
 
 %% Setup variables for reduced order based
 w = 5; % window of size
-winit = 50;
-wtotal = 200;
+winit = 200;
+wtotal = 201;
 n = 10; % number of reduced basis
 z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 m = 2*Np*K; % number of sample points
@@ -79,8 +79,10 @@ Q(:, 1:winit) = [Qh;Qv];
 [U, S] = svd(Qfull(:,1:winit), 'econ'); % This should only take the svd for the initial window size, right? 
                                         % Changed it to Qfull for now for
                                         % the tests
-semilogy(S, '-o');
+semilogy(diag(S), '-ko');
 waitforbuttonpress;
+
+
 Uk = U(:, 1:n);
 Pk = qdeim(Uk);
 
@@ -105,20 +107,20 @@ for k = winit+1:wtotal
     fprintf("|| Qapprox(k)  - Qfull(k) || = %e\n", norm(Q(:,k) - Qfull(:,k)));
     errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
 
-%     if (mod(k, z)==0 || k==winit+1)
-%         fprintf('adapt sample pts ....\n')
-% %         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
-%         F(:,k) = ftrue(Q(:,k-1),time,time_end);
-%         Rk = F(:, k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
-%         [~,sk] = sort(sum((Rk.^2),2),'descend');
-%         skhat = sk(m+1:end);
-%         sk = sk(1:m);
-%     else
-% %         temp = ftrue(Qfull(:,k-1),time,time_end);
-%         temp = ftrue(Q(:,k-1),time,time_end);
-%         F(sk,k) = temp(sk);
-%         F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
-%     end
+    if (mod(k, z)==0 || k==winit+1)
+        fprintf('adapt sample pts ....\n')
+%         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
+        F(:,k) = ftrue(Q(:,k-1),time,time_end);
+        Rk = F(:, k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
+        [~,sk] = sort(sum((Rk.^2),2),'descend');
+        skhat = sk(m+1:end);
+        sk = sk(1:m);
+    else
+%         temp = ftrue(Qfull(:,k-1),time,time_end);
+        temp = ftrue(Q(:,k-1),time,time_end);
+        F(sk,k) = temp(sk);
+        F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
+    end
     
     time = time_end;
     
@@ -131,4 +133,4 @@ end
 %%
 semilogy(1:wtotal-(winit),(errs'),'o-','Linewidth',1.5);
 title("|q_{true}-UU^Tq_{true}|");
-ylabel('error');
+ylabel('error')s

@@ -31,7 +31,7 @@ StartUp1D;
 %% Setup variables for reduced order based
 w = 5; % window of size
 winit = 20;
-wtotal = 35;
+wtotal = 700;
 n = 10; % number of reduced basis
 z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 m = 2*Np*K; % number of sample points
@@ -79,7 +79,11 @@ Q(:, 1:winit) = [Qh;Qv];
 [U, S] = svd(Qfull(:,1:winit), 'econ'); % This should only take the svd for the initial window size, right? 
                                         % Changed it to Qfull for now for
                                         % the tests
-semilogy(S, '-o');
+
+% local low-rank structure
+semilogy(diag(S), 'so');
+ylabel('$singular values$', 'Interpreter','Latex','FontSize',15);
+title('w = 5, t = 2')
 waitforbuttonpress;
 Uk = U(:, 1:n);
 Pk = qdeim(Uk);
@@ -97,19 +101,19 @@ for k = winit+1:wtotal
     
     Q(:,k) = Uk*qnew;
     
-    if(mod(k, 20) == 0)
+    if(mod(k, 10) == 0)
         plotsol(x, Q(:,k), Qfull(:,k), time);
     end
     
-    fprintf("|| UUtQfull(k) - Qfull(k) || = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k))); 
-    fprintf("|| Qapprox(k)  - Qfull(k) || = %e\n\n", norm(Q(:,k) - Qfull(:,k)));
+    fprintf("||UUtQfull(k)-Qfull(k)|| = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k))); 
+    fprintf("||Qapprox(k)-Qfull(k)||/||Qfull(k)||= %e\n", norm(Q(:,k) - Qfull(:,k))/norm(Qfull(:,k)));
     errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
 
     if (mod(k, z)==0 || k==winit+1)
         fprintf('adapt sample pts ....\n')
 %         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
         F(:,k) = ftrue(Q(:,k),time,time_end); % F(:, k) is the surrogate of the full model at timestep k+1
-        Rk = F(:,k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
+        Rk = -F(:,k-w+1:k) + Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
         [~,sk] = sort(sum((Rk.^2),2),'descend');
         skhat = sk(m+1:end);
         sk = sk(1:m);
@@ -125,9 +129,9 @@ for k = winit+1:wtotal
 %     sk = 1:m; 
 %     Fk = Qfull(:, k-w+1:k);
     Fk = F(:, k-w+1:k);
-    [Uk, Pk, rho2] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
-    [~,s,~] = svd(Fk,0);
-    fprintf('d(Uk+1, Ubark+1) = %e\n', rho2/(min(diag(s))^2));
+    [Uk, Pk, ~] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+%     [~,s,~] = svd(Fk,0);
+%     fprintf('d(Uk+1, Ubark+1) = %e\n', rho2/(min(diag(s))^2));
 end
 
 %%
