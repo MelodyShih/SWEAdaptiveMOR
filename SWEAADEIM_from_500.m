@@ -30,8 +30,8 @@ StartUp1D;
 
 %% Setup variables for reduced order based
 w = 5; % window of size
-winit = 200;
-wtotal = 201;
+winit = 30;
+wtotal = 940;
 n = 10; % number of reduced basis
 z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 m = 2*Np*K; % number of sample points
@@ -41,11 +41,11 @@ F = zeros(2*Np*K, wtotal);
 
 %% Initial condition (load data from step 500)
 % height
-load('h500.mat');
+load('data/h0.mat');
 % momentum
-load('v500.mat');
+load('data/v0.mat');
 %time 
-load('time.mat');
+load('data/time0.mat');
 
 % setup bathymetry (mu)
 a0 = (a+b)/2-10;
@@ -76,10 +76,12 @@ Qfull(:,1:wtotal) = [Qhfull;Qvfull];
 Q(:, 1:winit) = [Qh;Qv];
 % norm(Qfull(:,1:winit)-Q(:,1:winit)) % Just checking that Qfull is the same as Q in the window
 
-[U, S] = svd(Qfull(:,1:winit), 'econ'); % This should only take the svd for the initial window size, right? 
+[U, S] = svd(Qfull(:,:), 'econ'); % This should only take the svd for the initial window size, right? 
                                         % Changed it to Qfull for now for
                                         % the tests
+s = diag(S);
 semilogy(diag(S), '-ko');
+save('sall.mat','s');
 waitforbuttonpress;
 
 
@@ -95,7 +97,7 @@ errs = zeros(wtotal-(winit),1);
 %% AADEIM
 for k = winit+1:wtotal
     time_end = time+tstep;
-    qnew = ftilde(Uk'*Q(:,k-1),time,time_end,Uk,Pk);
+    qnew = ftilde(Q(:,k-1),time,time_end,Uk,Pk);
     
     Q(:,k) = Uk*qnew;
     
@@ -117,6 +119,7 @@ for k = winit+1:wtotal
         sk = sk(1:m);
     else
 %         temp = ftrue(Qfull(:,k-1),time,time_end);
+        F(sk,k) = 
         temp = ftrue(Q(:,k-1),time,time_end);
         F(sk,k) = temp(sk);
         F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
@@ -133,4 +136,4 @@ end
 %%
 semilogy(1:wtotal-(winit),(errs'),'o-','Linewidth',1.5);
 title("|q_{true}-UU^Tq_{true}|");
-ylabel('error')s
+ylabel('error')

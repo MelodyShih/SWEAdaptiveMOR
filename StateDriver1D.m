@@ -5,7 +5,7 @@ close all;
 Globals1D;
 
 % Final time
-FinalTime = 10;
+FinalTime = 0;
 
 % given parameter
 a=0; b=500; % space
@@ -98,6 +98,6 @@ end
 
 hinit = h;
 vinit = v;
-save('h10.mat','hinit');
-save('v10.mat','vinit');
-save('time10.mat','time');
+save('data/h0.mat','hinit');
+save('data/v0.mat','vinit');
+save('data/time0.mat','time');
