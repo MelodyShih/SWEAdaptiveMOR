@@ -22,7 +22,7 @@ K = scale*b;
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(a, b, K);
 
-limiter = 1; % if use limiter
+limiter = 0; % if use limiter
 
 
 % Initialize solver and construct grid and metric

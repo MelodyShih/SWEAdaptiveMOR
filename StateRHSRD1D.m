@@ -63,17 +63,17 @@ end
 
 % % specific bounadry condition for test problem
 
-%Set fluxes at inflow/outflow
+% Set fluxes at inflow/outflow
 
-% hfin = vin; vfin = vin.^2./hin + g*hin.^2/2;
-% lmI=abs(v(crd(1))./h(crd(1)))+sqrt(g*h(crd(1)))/2; nxI=nx(crd(1));
-% dhf(1)=nxI*(v(crd(1))-hfin)/2.0-lmI*(h(crd(1))-hin);  
-% dvf(1)=nxI*(v(crd(1)).^2./h(crd(1))+g*h(crd(1)).^2/2-vfin)/2.0-lmI*(v(crd(1))-vin);
-% 
-% hfout = vout; vfout = vout.^2./hout + g*hout.^2/2;
-% lmO=abs(v(crd(end))./h(crd(end)))+sqrt(g*h(crd(end)))/2; nxO=nx(crd(end));
-% dhf(end)=nxO*(v(crd(end))-hfout)/2.0-lmO*(h(end)-hout);  
-% dvf(end)=nxO*(v(crd(end)).^2./h(crd(end))+g*h(crd(end)).^2/2-vfout)/2.0-lmO*(v(end)-vout);
+hfin = vin; vfin = vin.^2./hin + g*hin.^2/2;
+lmI=abs(v(crd(1))./h(crd(1)))+sqrt(g*h(crd(1)))/2; nxI=nx(crd(1));
+dhf(1)=nxI*(v(crd(1))-hfin)/2.0-lmI*(h(crd(1))-hin);  
+dvf(1)=nxI*(v(crd(1)).^2./h(crd(1))+g*h(crd(1)).^2/2-vfin)/2.0-lmI*(v(crd(1))-vin);
+
+hfout = vout; vfout = vout.^2./hout + g*hout.^2/2;
+lmO=abs(v(crd(end))./h(crd(end)))+sqrt(g*h(crd(end)))/2; nxO=nx(crd(end));
+dhf(end)=nxO*(v(crd(end))-hfout)/2.0-lmO*(h(end)-hout);  
+dvf(end)=nxO*(v(crd(end)).^2./h(crd(end))+g*h(crd(end)).^2/2-vfout)/2.0-lmO*(v(end)-vout);
 
 
 % compute right hand sides of the PDE's
