@@ -1,3 +1,5 @@
+
+
 function [Krd,crd,crdm] = ReducePoint(Sk)
 % Build the map from the reduced basis locations to the full space
 % Input: Sk -- a 2Np*K row vector gives the location of the points
@@ -9,10 +11,11 @@ Globals1D;
 
 totalpts = Np*K; % total number of points
 crd = ceil((Sk.*(Sk<=totalpts)+(Sk-totalpts).*(Sk>totalpts))/Np);
-crd = unique([crd+1,crd,crd-1]);
-crd(crd<=1)=[];
-crd(crd>=K)=[];
-crdm=[1,crd,K]; % columns for matrix form
+% crd = unique([crd+1,crd,crd-1]);
+crd = unique([crd+3,crd+2,crd+1,crd,crd-1,crd-2,crd-3]);
+crd(crd<1)=crd(crd<1)+K;
+crd(crd>K)=crd(crd>K)-K;
+crdm=crd; % columns for matrix form
 Krd = length(crdm);
 crd = zeros(1,2*Krd); % vector form
 crd(1:2:end)=crdm*2-1;

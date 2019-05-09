@@ -1,3 +1,8 @@
+
+
+
+
+
 function [rhsh, rhsv] = StateRHSRD1D(h, v, time, B,Krd,crd,crdm,Sk)
 
 % function [rhsh, rhsv] = StateRHS1D(h, v, time, B)
@@ -15,20 +20,20 @@ Globals1D;
 
 % compute maximum velocity for LF flux 
 g=9.8; % gravity constant
-lm = abs(v./h)+sqrt(g*h);
+
 
 
 % Compute fluxes
-hf = v; vf = v.^2./h + g*h.^2/2;
+
 
 vmapMrd = vmapM(crd);
 vmapPrd = vmapP(crd);
 % Compute jumps at internal faces
 dh = zeros(Nfp*Nfaces,Krd); dh(:)  =  h(vmapMrd)-  h(vmapPrd); 
 dv = zeros(Nfp*Nfaces,Krd); dv(:)  = v(vmapMrd)- v(vmapPrd);
-dhf = zeros(Nfp*Nfaces,Krd); dhf(:)  = hf(vmapMrd)- hf(vmapPrd);
-dvf = zeros(Nfp*Nfaces,Krd); dvf(:) = vf(vmapMrd)- vf(vmapPrd);
-LFc = zeros(Nfp*Nfaces,Krd); LFc(:) = max(lm(vmapPrd),lm(vmapMrd));
+dhf = zeros(Nfp*Nfaces,Krd); dhf(:)=dv(:);
+dvf = zeros(Nfp*Nfaces,Krd); dvf(:) = v(vmapMrd).^2./h(vmapMrd)+g*h(vmapMrd).^2/2- (v(vmapPrd).^2./h(vmapPrd)+g*h(vmapPrd).^2/2);
+LFc = zeros(Nfp*Nfaces,Krd); LFc(:) = max(abs(v(vmapMrd)./h(vmapMrd))+sqrt(g*h(vmapMrd)),abs(v(vmapPrd)./h(vmapPrd))+sqrt(g*h(vmapPrd)));
 
 % Compute fluxes at interfaces
 nrd = nx(:);nrd=nrd(crd);
@@ -41,24 +46,37 @@ dvf(:) = nrd.*dvf(:)/2.0-LFc(:)/2.0.*dv(:);
 % hin = h(vmapI); hout = h(vmapO); % Neumann boundary condition for h
 % vin = 0.0; vout = 0.0; % Dirichlet boundary condition for v
 
-hin = h(vmapO); hout = h(vmapI); % periodic 
-vin = v(vmapO); vout = v(vmapI); % periodic
+if crdm(1)==1
+hin = h(vmapO); vin = v(vmapO); 
+else
+    hin=h(crd(1)-1);
+    vin=v(crd(1)-1);
+end
+
+if crdm(end)==K
+    hout = h(vmapI); % periodic 
+    vout = v(vmapI); % periodic
+else
+    hout=h(crd(end)+1);
+    vout=v(crd(end)+1);
+end
 
 % % specific bounadry condition for test problem
 
-% Set fluxes at inflow/outflow
-hfin = vin; vfin = vin.^2./hin + g*hin.^2/2;
-lmI=lm(vmapI)/2; nxI=nx(mapI);
-dhf(mapI)=nxI*(hf(vmapI)-hfin)/2.0-lmI*(h(vmapI)-hin);  
-dvf(mapI)=nxI*(vf(vmapI)-vfin)/2.0-lmI*(v(vmapI)-vin);
+%Set fluxes at inflow/outflow
 
-hfout = vout; vfout = vout.^2./hout + g*hout.^2/2;
-lmO=lm(vmapO)/2; nxO=nx(mapO);
-dhf(2*Krd)=nxO*(hf(2*Krd) - hfout)/2.0-lmO*(h(2*Krd)- hout);  
-dvf(2*Krd)=nxO*(vf(2*Krd)-vfout)/2.0-lmO*(v(2*Krd)-vout);
+% hfin = vin; vfin = vin.^2./hin + g*hin.^2/2;
+% lmI=abs(v(crd(1))./h(crd(1)))+sqrt(g*h(crd(1)))/2; nxI=nx(crd(1));
+% dhf(1)=nxI*(v(crd(1))-hfin)/2.0-lmI*(h(crd(1))-hin);  
+% dvf(1)=nxI*(v(crd(1)).^2./h(crd(1))+g*h(crd(1)).^2/2-vfin)/2.0-lmI*(v(crd(1))-vin);
+% 
+% hfout = vout; vfout = vout.^2./hout + g*hout.^2/2;
+% lmO=abs(v(crd(end))./h(crd(end)))+sqrt(g*h(crd(end)))/2; nxO=nx(crd(end));
+% dhf(end)=nxO*(v(crd(end))-hfout)/2.0-lmO*(h(end)-hout);  
+% dvf(end)=nxO*(v(crd(end)).^2./h(crd(end))+g*h(crd(end)).^2/2-vfout)/2.0-lmO*(v(end)-vout);
 
 
 % compute right hand sides of the PDE's
-rhsh  = -rx(:,crdm).*(Dr*hf(:,crdm))  + LIFT*(Fscale(:,crdm).*dhf);
+rhsh  = -rx(:,crdm).*(Dr*v(:,crdm))  + LIFT*(Fscale(:,crdm).*dhf);
 rhsv = -rx(:,crdm).*(Dr*(v(:,crdm).^2./h(:,crdm)))-g*h(:,crdm).*(rx(:,crdm).*(Dr*(h(:,crdm)+B(:,crdm)))) + LIFT*(Fscale(:,crdm).*dvf);
 return
