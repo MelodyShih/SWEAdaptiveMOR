@@ -29,23 +29,23 @@ limiter = 1; % if use limiter
 StartUp1D;
 
 %% Setup variables for reduced order based
-w = 5; % window of size
-winit = 30;
-wtotal = 940;
-n = 10; % number of reduced basis
-z = 5;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
-m = 2*Np*K; % number of sample points
+w = 101; % window of size
+winit = 150;
+wtotal = 200;
+n = 100; % number of reduced basis
+z = 1;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
+m = 2000; % number of sample points
 r = 1;  % rank r updates of the reduced basis
 Q = zeros(2*Np*K, wtotal);
 F = zeros(2*Np*K, wtotal);
 
 %% Initial condition (load data from step 500)
 % height
-load('data/h0.mat');
+load('data/h5.mat');
 % momentum
-load('data/v0.mat');
+load('data/v5.mat');
 %time 
-load('data/time0.mat');
+load('data/time5.mat');
 
 % setup bathymetry (mu)
 a0 = (a+b)/2-10;
@@ -66,7 +66,7 @@ plot(x,hinit+B,'b',x,B,'k','LineWidth',2);
 title(['t=',num2str(time)]);
 
 %% Precompute full solution for projection onto reduced space
-[Qhfull,Qvfull,time] = solveFOM(hinit,vinit,time,tstep,wtotal);
+[Qhfull,Qvfull,~] = solveFOM(hinit,vinit,time,tstep,wtotal);
 Qfull = zeros(2*Np*K, wtotal);
 Qfull(:,1:wtotal) = [Qhfull;Qvfull];
 
@@ -76,64 +76,80 @@ Qfull(:,1:wtotal) = [Qhfull;Qvfull];
 Q(:, 1:winit) = [Qh;Qv];
 % norm(Qfull(:,1:winit)-Q(:,1:winit)) % Just checking that Qfull is the same as Q in the window
 
-[U, S] = svd(Qfull(:,:), 'econ'); % This should only take the svd for the initial window size, right? 
-                                        % Changed it to Qfull for now for
-                                        % the tests
-s = diag(S);
-semilogy(diag(S), '-ko');
-save('sall.mat','s');
-waitforbuttonpress;
+[U, S] = svd(Q(:,1:winit), 'econ'); 
 
+% decay of svd
+if(debug)
+    s = diag(S);
+    semilogy(diag(S), '-ko');
+    waitforbuttonpress;
+end
 
 Uk = U(:, 1:n);
 Pk = qdeim(Uk);
 
-% F(:,1:w-1) = Q(:,winit-w+2:winit);
 F(:,1:winit) = Q(:,1:winit);
 qold = Uk'*Q(:,winit);
 
 errs = zeros(wtotal-(winit),1);
 
 %% AADEIM
+tic;
 for k = winit+1:wtotal
     time_end = time+tstep;
-    qnew = ftilde(Q(:,k-1),time,time_end,Uk,Pk);
-    
+    qnew = ftilde(Q(:,k-1),time,time_end,Uk,Pk); % Ck = (Pk'*Uk)\Pk'*Fk
     Q(:,k) = Uk*qnew;
     
-    if(mod(k, 20) == 0)
-        plotsol(x, Q(:,k), Qfull(:,k), time);
+    if(debug)
+        if(mod(k, 10) == 0)
+            plotsol(x, Q(:,k), Qfull(:,k), time);
+        end
+        
+        fprintf("||UUtQfull(k)-Qfull(k)|| = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)));
+        fprintf("||Qapprox(k)-Qfull(k)||/||Qfull(k)||= %e\n", norm(Q(:,k) - Qfull(:,k))/norm(Qfull(:,k)));
+        errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
     end
     
-    fprintf("|| UUtQfull(k) - Qfull(k) || = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k))); 
-    fprintf("|| Qapprox(k)  - Qfull(k) || = %e\n", norm(Q(:,k) - Qfull(:,k)));
-    errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
-
     if (mod(k, z)==0 || k==winit+1)
         fprintf('adapt sample pts ....\n')
-%         F(:,k) = ftrue(Qfull(:,k-1),time,time_end);
-        F(:,k) = ftrue(Q(:,k-1),time,time_end);
-        Rk = F(:, k-w+1:k) - Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
-        [~,sk] = sort(sum((Rk.^2),2),'descend');
+        F(:,k) = ftrue(Q(:,k),time,time_end); % F(:, k) is the surrogate of the full model at timestep k+1
+        Rk = -F(:,k-w+1:k) + Uk*(Uk(Pk,:)\F(Pk,k-w+1:k));
+        [Rksk,sk] = sort(sum((Rk.^2),2),'descend');
+        
+        % Local coherence
+        if(debug)
+            figure(3);
+            semilogy(Rksk, 'k-.','Linewidth',1.5);
+            title(['$m=$', num2str(m), ', time step $k = $', num2str(k)], 'Interpreter', 'latex', 'FontSize',20);
+            xlabel('index $j_i$', 'Interpreter', 'latex', 'FontSize',20);
+            legend({'$((U_k C_k - F_k)^Te_{j_i})^2$'}, 'Interpreter', 'latex', 'FontSize',20);
+            ylim([1e-15, 1]);
+            grid on;
+        end
+        
         skhat = sk(m+1:end);
         sk = sk(1:m);
     else
-%         temp = ftrue(Qfull(:,k-1),time,time_end);
-        F(sk,k) = 
-        temp = ftrue(Q(:,k-1),time,time_end);
+%         F(sk,k) = ftrueSk(Q(:,k),time,time_end,sk');
+        temp = ftrue(Q(:,k),time,time_end);
         F(sk,k) = temp(sk);
         F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
     end
     
     time = time_end;
     
-    sk = 1:m; 
-    Fk = Qfull(:, k-w+1:k);
-%     Fk = F(:, k-w+1:s);
-    [Uk, Pk] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+    Fk = F(:, k-w+1:k);
+    [Uk, Pk, ~] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
+    
+    if(debug)
+        [~,s,~] = svd(Fk,0);
+        fprintf('d(Uk+1, Ubark+1) = %e\n', rho2/(min(diag(s))^2));
+    end
 end
-
-%%
-semilogy(1:wtotal-(winit),(errs'),'o-','Linewidth',1.5);
-title("|q_{true}-UU^Tq_{true}|");
-ylabel('error')
+toc
+%% plot qtrue - UU^Tqtrue
+figure(4);
+semilogy(1:wtotal-(winit),(errs'),'k.-','Linewidth',1.5);
+title("$\|q_{true}-U_kU_k^Tq_{true}\|_2$, number of basis $n = 10$", 'Interpreter', 'latex', 'FontSize',20);
+xlabel('time step $k$','Interpreter', 'latex', 'FontSize',20);
+grid on;

@@ -10,14 +10,18 @@ function plotsol(x, q, qtrue, time)
     plot(x(1,:),h(1,:)+B(1,:),'b','LineWidth',2);
     hold on;
     plot(x(1,:),htrue(1,:)+B(1,:)-1,'r','LineWidth',2);
+    title('$h(x,t)+B(x)$', 'Interpreter', 'latex', 'Fontsize',20);
+    xlabel('$x$', 'Interpreter', 'latex', 'Fontsize',20)
+    legend({'approximation', 'true'}, 'Interpreter', 'latex', 'Fontsize',20);
     hold off;
-    title(['t=',num2str(time)]);
+    
     
     figure(2);
     plot(x(1,:),v(1,:),'b','LineWidth',2);
     hold on;
     plot(x(1,:),vtrue(1,:)-1,'r','LineWidth',2);
+    title('$v(x,t)$', 'Interpreter', 'latex', 'Fontsize',20);
+    legend({'approximation', 'true'}, 'Interpreter', 'latex', 'Fontsize',20);
     hold off;
-    title(['t=',num2str(time)]);
 end
 
