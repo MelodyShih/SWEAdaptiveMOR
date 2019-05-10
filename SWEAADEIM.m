@@ -29,7 +29,7 @@ StartUp1D;
 
 %% Setup variables for reduced order based
 winit = 150;
-wtotal = 627; %(1,63), (2,126), (5,313), (10,627)
+wtotal = 313; %(1,63), (2,126), (5,313), (10,627)
 n = 100; % number of reduced basis
 w = n+1; % window of size
 z = 1;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
@@ -107,6 +107,7 @@ for k = winit+1:wtotal
         fprintf("||UUtQfull(k)-Qfull(k)|| = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)));
         fprintf("||Qapprox(k)-Qfull(k)||/||Qfull(k)||= %e\n", norm(Q(:,k) - Qfull(:,k))/norm(Qfull(:,k)));
         errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
+        if(errs(k-(winit)) )
     end
     
     if (mod(k, z)==0 || k==winit+1)
@@ -139,11 +140,6 @@ for k = winit+1:wtotal
     
     Fk = F(:, k-w+1:k);
     [Uk, Pk, ~] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
-    
-    if(debug)
-        [~,s,~] = svd(Fk,0);
-        fprintf('d(Uk+1, Ubark+1) = %e\n', rho2/(min(diag(s))^2));
-    end
 end
 toc
 %% plot qtrue - UU^Tqtrue

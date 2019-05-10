@@ -31,11 +31,14 @@ StartUp1D;
 %% Setup variables for reduced order based
 w = 101; % window of size
 winit = 150;
-wtotal = 200;
+wtotal = 350;
 n = 100; % number of reduced basis
 z = 1;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 m = 2000; % number of sample points
 r = 1;  % rank r updates of the reduced basis
+
+debug = 1;
+
 Q = zeros(2*Np*K, wtotal);
 F = zeros(2*Np*K, wtotal);
 
@@ -140,11 +143,6 @@ for k = winit+1:wtotal
     
     Fk = F(:, k-w+1:k);
     [Uk, Pk, ~] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
-    
-    if(debug)
-        [~,s,~] = svd(Fk,0);
-        fprintf('d(Uk+1, Ubark+1) = %e\n', rho2/(min(diag(s))^2));
-    end
 end
 toc
 %% plot qtrue - UU^Tqtrue
