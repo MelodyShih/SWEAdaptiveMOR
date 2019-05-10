@@ -28,9 +28,9 @@ limiter = 1; % if use limiter
 StartUp1D;
 
 %% Setup variables for reduced order based
-winit = 150;
+winit = 30;
 wtotal = 313; %(1,63), (2,126), (5,313), (10,627)
-n = 100; % number of reduced basis
+n = 10; % number of reduced basis
 w = n+1; % window of size
 z = 1;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
 % m = 2*Np*K; % number of sample points
@@ -107,7 +107,6 @@ for k = winit+1:wtotal
         fprintf("||UUtQfull(k)-Qfull(k)|| = %e, ", norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)));
         fprintf("||Qapprox(k)-Qfull(k)||/||Qfull(k)||= %e\n", norm(Q(:,k) - Qfull(:,k))/norm(Qfull(:,k)));
         errs(k-(winit)) = norm(Uk*Uk'*Qfull(:,k) - Qfull(:,k)); % how well the next solution can be represented in the new basis
-        if(errs(k-(winit)) )
     end
     
     if (mod(k, z)==0 || k==winit+1)
