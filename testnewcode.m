@@ -22,7 +22,7 @@ K = scale*b;
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(a, b, K);
 
-limiter = 1; % if use limiter
+limiter = 0; % if use limiter
 
 
 % Initialize solver and construct grid and metric
@@ -74,6 +74,7 @@ q = Qfull(:,1);
 h = reshape(q(1:Np*K), [Np, K]);
 v = reshape(q(Np*K+1:end), [Np, K]);
 
+%%
 idx = [1000; 1050];
 [Krd,crd,crdm] = ReducePoint(idx');
 [F] = StateFixTSRD1D(h,v,tstep,2*tstep,B,limiter,Krd,crd,crdm,idx');
@@ -83,3 +84,19 @@ plot(Qfull(idx,2), 'o');
 hold on;
 plot(F, '*');
 legend('true', 'new');
+
+norm(Qfull(idx,2)-F)
+
+%%
+q = Qfull(:,1);
+h = reshape(q(1:Np*K), [Np, K]);
+v = reshape(q(Np*K+1:end), [Np, K]);
+[rhsh, rhsv] = StateRHS1D(h, v, time, B);
+rhsh1=rhsh(:,crdm);
+rhsv1=rhsv(:,crdm);
+q = Qfull(:,1);
+h = reshape(q(1:Np*K), [Np, K]);
+v = reshape(q(Np*K+1:end), [Np, K]);
+[rhsh2, rhsv2] = StateRHSRD1D(h, v, time, B,Krd,crd,crdm,idx');
+
+

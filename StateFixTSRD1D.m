@@ -48,10 +48,10 @@ dt=FinalTime-T0;
 
   % SSP RK Stage 2.
   [rhsh, rhsv]  = StateRHSRD1D(h1, v1, time+dt, B,Krd,crd,crdm,Sk);
-  h2 = (3*h  + h1)/4;
-  h2(:,crdm)=h2(:,crdm)+ dt*rhsh/4;
-  v2 = (3*v  + v1)/4;
-  v2(:,crdm)=v2(:,crdm)+ dt*rhsv/4;
+  h2 = h;
+  h2(:,crdm)=(3*h(:,crdm)+h1(:,crdm)+ dt*rhsh)/4;
+  v2 = v;
+  v2(:,crdm)=(3*v(:,crdm)+v1(:,crdm)+ dt*rhsv)/4;
  
   if (limiter)
   % Limit fields
@@ -60,10 +60,8 @@ dt=FinalTime-T0;
   
   % SSP RK Stage 3.
   [rhsh, rhsv]  = StateRHSRD1D(h2, v2,time+dt/2, B,Krd,crd,crdm,Sk);
-  h = (h  + 2*h2)/3;
-  h(:,crdm) = h(:,crdm)+2*dt*rhsh/3;
-  v = (v  + 2*v2)/3;
-  v(:,crdm) = v(:,crdm)+2*dt*rhsv/3;
+  h(:,crdm) = (h(:,crdm)+2*h2(:,crdm)+2*dt*rhsh)/3;
+  v(:,crdm) = (v(:,crdm)+2*v2(:,crdm)+2*dt*rhsv)/3;
 
 
   if (limiter)
