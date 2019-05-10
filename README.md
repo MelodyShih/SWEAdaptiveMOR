@@ -6,8 +6,11 @@ MATH-GA.2012-004  Stochastic Modeling And Uncertainty Quantification In Complex 
 * nodal-dg
 ```
 git clone https://github.com/tcew/nodal-dg.git
-cd nodal-dg.git
-run Codes1.1/mypath.m script in matlab console
+```
+In Matlab Console:
+```
+cd nodal-dg
+Codes1.1/mypath
 ```
 
 ### AADEIM for shallow water equations
