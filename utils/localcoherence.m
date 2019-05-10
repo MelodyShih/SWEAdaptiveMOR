@@ -1,24 +1,24 @@
 close all;
 m = 4000;
 
-load('data/res1.mat');
-load('data/restime1.mat')
+load('../data/res1.mat');
+load('../data/restime1.mat')
 t1 = time;
 semilogy(ressqr(1:m),'-k', 'Linewidth', 1);
 hold on;
 
-load('data/res2.mat');
-load('data/restime2.mat')
+load('../data/res2.mat');
+load('../data/restime2.mat')
 t2 = time;
 semilogy(ressqr(1:m),'--.k');
 
-load('data/res5.mat');
-load('data/restime5.mat')
+load('../data/res5.mat');
+load('../data/restime5.mat')
 t5 = time;
 semilogy(ressqr(1:m),'-.k', 'Linewidth', 1);
 
-load('data/res10.mat');
-load('data/restime10.mat')
+load('../data/res10.mat');
+load('../data/restime10.mat')
 t10 = time;
 semilogy(ressqr(1:m),'-k');
 

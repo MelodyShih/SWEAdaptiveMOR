@@ -1,24 +1,24 @@
 close all;
 m = 4;
 
-load('data/S0_30.mat');
+load('../data/S0_30.mat');
 semilogy(s,'-ko');
 xlim([1,30])
 hold on;
 
-load('data/S1_30.mat');
+load('../data/S1_30.mat');
 semilogy(s,'-ks');
 
-load('data/S2_30.mat');
+load('../data/S2_30.mat');
 semilogy(s,'-.ko');
 
-load('data/S5_30.mat');
+load('../data/S5_30.mat');
 semilogy(s,'-k*');
 
-load('data/S10_30.mat');
+load('../data/S10_30.mat');
 semilogy(s,'-kd');
 
-load('data/Sall.mat');
+load('../data/Sall.mat');
 semilogy(s,'-k.','MarkerSize',10);
 
 legend({'from $t = 0$','from $t = 1$', 'from $t = 2$', 'from $t = 5$', 'from $t = 10$', 'global'}, ...
