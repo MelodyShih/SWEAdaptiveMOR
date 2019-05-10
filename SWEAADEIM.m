@@ -22,24 +22,24 @@ K = scale*b;
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(a, b, K);
 
-limiter = 1; % if use limiter
+limiter = 0; % if use limiter
 
 % Initialize solver and construct grid and metric
 StartUp1D;
 
 %% Setup variables for reduced order based
-winit = 30;
-wtotal = 313; %(1,63), (2,126), (5,313), (10,627)
-n = 10; % number of reduced basis
-w = n+1; % window of size
-z = 1;  % how often we adapted the sample pts, set to 1 for testing how well reduced space approximates true solution
-% m = 2*Np*K; % number of sample points
-m = 2000;
-r = 1;  % rank r up dates of the reduced basis
-Q = zeros(2*Np*K, wtotal);
-F = zeros(2*Np*K, wtotal);
+ winit = 30;        % number of initial time steps for constructing the DEIM basis
+wtotal = 313;       % total number of time steps
+     n = 10;        % number of reduced basis
+     w = n+1;       % window of size
+     z = 1;         % how often we adapted the sample pts, 
+                    % set to 1 for testing how well reduced space approximates true solution
+     m = 2000;      % number of sample points
+     r = 1;         % rank r up dates of the reduced basis
+     Q = zeros(2*Np*K, wtotal);
+     F = zeros(2*Np*K, wtotal);
 
-debug = 1;
+debug = 1; % report of relative error, decay of the residuals
 
 %% Initial condition
 % height
@@ -55,6 +55,7 @@ B = -hinit+mu*(1 + cos(2*pi/p*(x - (a0+b0)/2))).*(x>a0 & x<b0);
 % momentum
 vinit = zeros(Np,K);
 
+%% Size of time step
 %time
 time=0;
 % fix time step
@@ -71,7 +72,8 @@ title(['t=',num2str(time)]);
 if(debug)
     tic;
     [Qhfull,Qvfull,~] = solveFOM(hinit,vinit,time,tstep,wtotal+1);
-    toc
+    t = toc;
+    fprintf('Time for full model = %f\n', t);
     Qfull = zeros(2*Np*K, wtotal+1);
     Qfull(:,1:wtotal+1) = [Qhfull;Qvfull];
 end
@@ -118,7 +120,7 @@ for k = winit+1:wtotal
         % Local coherence
         if(debug)
             figure(3);
-            semilogy(Rksk, 'k-.','Linewidth',1.5);
+            semilogy(Rksk, 'k-','Linewidth',1.5);
             title(['$m=$', num2str(m), ', time step $k = $', num2str(k)], 'Interpreter', 'latex', 'FontSize',20);
             xlabel('index $j_i$', 'Interpreter', 'latex', 'FontSize',20);
             legend({'$((U_k C_k - F_k)^Te_{j_i})^2$'}, 'Interpreter', 'latex', 'FontSize',20);
@@ -129,9 +131,9 @@ for k = winit+1:wtotal
         skhat = sk(m+1:end);
         sk = sk(1:m);
     else
-%         F(sk,k) = ftrueSk(Q(:,k),time,time_end,sk');
-        temp = ftrue(Q(:,k),time,time_end);
-        F(sk,k) = temp(sk);
+        F(sk,k) = ftrueSk(Q(:,k),time,time_end,sk');
+%         temp = ftrue(Q(:,k),time,time_end);
+%         F(sk,k) = temp(sk);
         F(skhat,k) = Uk(skhat,:)*pinv(Uk(sk,:))*F(sk,k);
     end
     
@@ -140,7 +142,9 @@ for k = winit+1:wtotal
     Fk = F(:, k-w+1:k);
     [Uk, Pk, ~] = adeim(Uk, Pk, sk, Fk(Pk,:), Fk(sk,:), r);
 end
-toc
+t1 = toc;
+fprintf('Time for AADEIM model = %f\n', t1);
+
 %% plot qtrue - UU^Tqtrue
 figure(4);
 semilogy(1:wtotal-(winit),(errs'),'k.-','Linewidth',1.5);
